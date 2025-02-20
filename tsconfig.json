@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+      "target": "es2020", // Or a suitable target
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext", // Or remove entirely
+      "outDir": "./dist", // Output directory
+      "strict": true, // Enable strict type checking
+      "esModuleInterop": true, // Important for compatibility
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true
+    }
+  }

@@ -1,7 +1,8 @@
+require('dotenv').config();
 import { connect } from 'http2';
 import {app} from './app';
 import connectDB from './utils/db';
-require('dotenv').config();
+
 // createing server
 
 app.listen(3000, () =>

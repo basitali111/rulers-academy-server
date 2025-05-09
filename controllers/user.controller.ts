@@ -3,11 +3,12 @@ import { Request, Response, NextFunction } from "express";
 import userModel, { IUser } from "../models/user.model";
 import ErrorHandler from "../utils/ErrorHandler";
 import { CatchAsyncErrors } from "../utils/CatchAsyncErrors";
-import jwt, { Secret } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
 import { sendToken } from "../utils/jwt";
+import { redis } from "../utils/redis";
 
 // Register a user => /api/v1/register
 interface IRegisterBody {
@@ -153,6 +154,10 @@ export const logoutUser = CatchAsyncErrors(async (req: Request, res: Response,ne
   try{
     res.cookie("access_token", "", {maxAge:1});
     res.cookie("refresh_token", "", {maxAge:1});
+    if (req.user && req.user._id) {
+      await redis.del(req.user._id.toString());
+    }
+    
     res.status(200).json({
       success: true,
       message: "Logged out successfully",
@@ -163,3 +168,26 @@ export const logoutUser = CatchAsyncErrors(async (req: Request, res: Response,ne
   }
 
 })
+
+  // update access token
+  export const updateAccessTokenn = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try{
+    const refresh_token = req.cookies.refresh_token as string;
+    const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as string) as JwtPayload;
+    const message = "Refresh token is not valid";
+    if (!decoded) {
+      return next(new ErrorHandler(message, 400));
+    }
+    const session = await redis.get(decoded.id as string);
+    if (!session) {
+      return next(new ErrorHandler(message, 400));
+    }
+    const user = JSON.parse(session);
+    const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, {
+      expiresIn: "15m",
+    });
+    }
+    catch (error:any) {     return next(new ErrorHandler(error.message, 400));
+    }
+    
+    })
